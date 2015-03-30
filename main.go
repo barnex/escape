@@ -14,7 +14,7 @@ var (
 	fl_npoints   = flag.Int("n", 0, "Number of points")
 	fl_delta     = flag.Float64("d", 1, "Distance between points")
 	fl_clength   = flag.Float64("w", 0, "Correltation length")
-	fl_amplitude = flag.Float64("a", 0, "Amplitude")
+	fl_amplitude = flag.Float64("a", 1, "RMS amplitude")
 	fl_kern      = flag.Float64("k", 5, "Kernel cut-off in correlation lengths")
 )
 
@@ -36,13 +36,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// make input noise
 	in := make([]float64, N)
-	out := make([]float64, N)
-
 	for i := range in {
-		in[i] = rand.Float64()
+		in[i] = rand.Float64() - 0.5
 	}
 
+	// make kernel
 	klen := 2*C + 1
 	kern := make([]float64, klen)
 	for d := -C; d <= C; d++ {
@@ -50,6 +50,8 @@ func main() {
 		kern[C-d] = math.Exp(-x * x)
 	}
 
+	// convolution: out = in * kern
+	out := make([]float64, N)
 	for i := range out {
 		for d := -C; d <= C; d++ {
 			j := i + d
@@ -64,6 +66,19 @@ func main() {
 			out[i] += in * k
 		}
 	}
+
+	// determine stddev
+	sumSq := 0.0
+	for _, x := range out {
+		sumSq += x * x
+	}
+	stddev := math.Sqrt(sumSq / float64(N))
+	scale := *fl_amplitude / stddev
+	for i := range out {
+		out[i] *= scale
+	}
+
+	// normalize to stddev
 
 	for i := range out {
 		fmt.Println(float64(i)*delta, "\t", out[i])
