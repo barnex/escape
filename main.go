@@ -46,7 +46,7 @@ func main() {
 	klen := 2*C + 1
 	kern := make([]float64, klen)
 	for d := -C; d <= C; d++ {
-		x := (float64(d) * delta / width)
+		x := (2 * float64(d) * delta / width)
 		kern[C-d] = math.Exp(-x * x)
 	}
 
@@ -73,12 +73,12 @@ func main() {
 		sumSq += x * x
 	}
 	stddev := math.Sqrt(sumSq / float64(N))
+
+	// normalize to stddev
 	scale := *fl_amplitude / stddev
 	for i := range out {
 		out[i] *= scale
 	}
-
-	// normalize to stddev
 
 	for i := range out {
 		fmt.Println(float64(i)*delta, "\t", out[i])
